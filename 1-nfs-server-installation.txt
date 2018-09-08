@@ -1,0 +1,83 @@
+Server ==============
+# https://www.howtoforge.com/nfs-server-and-client-on-centos-7
+
+setenforce 0
+sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
+sed -i "s/SELINUX=Enforcing/SELINUX=disabled/g" /etc/selinux/config
+/sbin/swapoff -a
+echo "centos:centos" | /sbin/chpasswd
+
+yum install -y nfs-utils
+
+systemctl enable rpcbind
+systemctl enable nfs-server
+systemctl enable nfs-lock
+systemctl enable nfs-idmap
+systemctl start rpcbind
+systemctl start nfs-server
+systemctl start nfs-lock
+systemctl start nfs-idmap
+
+mkdir -p /es_data
+mkdir -p /prometheus_data
+mkdir -p /nexus
+mkdir -p /jenkins_home
+mkdir -p /jenkins_workspace
+mkdir -p /jenkins_jobs
+mkdir -p /jenkins_mvn_local_repo
+mkdir -p /docker_registry
+mkdir -p /gogs_data
+mkdir -p /grafana_data
+
+rm -rf /es_data/*
+rm -rf /prometheus_data/*
+rm -rf /nexus/*
+rm -rf /jenkins_home/*
+rm -rf /jenkins_workspace/*
+rm -rf /jenkins_jobs/*
+rm -rf /jenkins_mvn_local_repo/*
+rm -rf /docker_registry/*
+rm -rf /gogs_data/*
+rm -rf /grafana_data/*
+
+
+groupmod -g 9000 centos
+usermod -u 9000 centos
+groupadd -g 1000 jenkins
+useradd -u 1000 -g jenkins -d /var/jenkins_home -m -s /bin//bash jenkins
+chown -R jenkins:jenkins /jenkins_home/*
+chown -R jenkins:jenkins /jenkins_workspace/*
+chown -R jenkins:jenkins /jenkins_jobs/*
+chown -R jenkins:jenkins /jenkins_mvn_local_repo/*
+
+groupadd -g 108 elasticsearch
+useradd -u 105 -g root -d /home/elasticsearch -m -s /bin/bash elasticsearch
+chown -R elasticsearch:elasticsearch /es_data/*
+
+chmod -R 777 /docker_registry
+chmod -R 777 /nexus
+chmod -R 777 /prometheus_data
+chmod -R 777 /gogs_data
+chmod -R 777 /grafana_data
+chmod -R 777 /jenkins_home
+chmod -R 777 /jenkins_workspace
+chmod -R 777 /jenkins_jobs
+chmod -R 777 /jenkins_mvn_local_repo
+
+
+echo -e "/es_data *(rw,insecure,sync,no_subtree_check,no_root_squash)
+/prometheus_data *(rw)
+/nexus *(rw)
+/jenkins_home *(rw)
+/jenkins_workspace *(rw)
+/jenkins_jobs *(rw)
+/jenkins_mvn_local_repo *(rw)
+/docker_registry *(rw)
+/gogs_data *(rw)
+/grafana_data *(rw)"> /etc/exports
+
+systemctl restart nfs-server
+
+
+mkdir -p /mnt/nfs
+mount -t nfs fabric8-nfs-server.tmn-dev.com:/docker_registry /mnt/nfs

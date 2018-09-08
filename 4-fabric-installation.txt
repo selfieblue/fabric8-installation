@@ -1,0 +1,31 @@
+kubectl create clusterrolebinding exposecontroller-cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=default:exposecontroller
+kubectl create clusterrolebinding configmap-cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=default:configmapcontroller
+kubectl create clusterrolebinding serviceaccounts-cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=system:serviceaccounts
+kubectl create clusterrolebinding serviceaccounts-cluster-metrics-admin-binding --clusterrole=cluster-admin --serviceaccount=default:metrics
+kubectl create clusterrolebinding serviceaccounts-cluster-jenkins-admin-binding --clusterrole=cluster-admin --serviceaccount=default:jenkins
+kubectl create clusterrolebinding serviceaccounts-cluster-ingress-admin-binding --clusterrole=cluster-admin --serviceaccount=fabric8-system:default
+
+kubectl create clusterrolebinding serviceaccounts-cluster-fluentd-admin-binding --clusterrole=cluster-admin --serviceaccount=default:fluentd
+kubectl create clusterrolebinding serviceaccounts-cluster-fluentd-admin-binding --clusterrole=cluster-admin --serviceaccount=default:node-exporter
+
+gofabric8_version='v0.4.140'
+mkdir -p /Users/jesada/Documents/gofabric8/
+cd /Users/jesada/Documents/gofabric8/
+mkdir -p $gofabric8_version && cd $gofabric8_version
+wget https://github.com/fabric8io/gofabric8/releases/download/$gofabric8_version/gofabric8-darwin-amd64
+chmod +x ./gofabric8-darwin-amd64
+rm -rf /usr/local/bin/gofabric8
+sudo cp -rf ./gofabric8-darwin-amd64 /usr/local/bin/gofabric8
+gofabric8 version
+
+./gofabric8-darwin-amd64 deploy --version 2.4.19
+kubectl get pods --watch
+gofabric8 validate
+
+
+kubectl label node ip-10-99-103-43.ap-southeast-1.compute.internal fabric8.io/externalIP=true --overwrite
+Change exposer configmap to 10.99.103.43.nip.io # ip of selected to be ingress node
+
+selfieblue/fabric8-nginx-ingress:1.11.4
+
+selfieblue/fabric8-hubot-notifier:2.2.335

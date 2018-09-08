@@ -1,0 +1,466 @@
+mkdir -p /opt/nfs-storage
+cd /opt/nfs-storage
+nfs_hostname="<hfs-server-hostname>"
+
+
+==================================================================
+cat <<EOF > docker-registry-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: docker-registry-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: fabric8-docker-registry-storage
+    namespace: default
+  nfs:
+    path: /docker_registry
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f docker-registry-pv.yaml
+
+cat <<EOF > docker-registry-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: fabric8-docker-registry-storage
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: docker-registry-pv
+EOF
+
+kubectl create -f docker-registry-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > es-data-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: es-data-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: es-data
+    namespace: default
+  nfs:
+    path: /es_data
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f es-data-pv.yaml
+
+cat <<EOF > es-data-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: es-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: es-data-pv
+EOF
+
+kubectl create -f es-data-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > prometheus-data-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: prometheus-data-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: prometheus-data
+    namespace: default
+  nfs:
+    path: /prometheus_data
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f prometheus-data-pv.yaml
+
+cat <<EOF > prometheus-data-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: prometheus-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: prometheus-data-pv
+EOF
+
+kubectl create -f prometheus-data-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > nexus-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: nexus-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: nexus-storage
+    namespace: default
+  nfs:
+    path: /nexus
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f nexus-pv.yaml
+
+cat <<EOF > nexus-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: nexus-storage
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: nexus-pv
+EOF
+
+kubectl create -f nexus-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > jenkins-home-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: jenkins-home-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: jenkins-home
+    namespace: default
+  nfs:
+    path: /jenkins_home
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f jenkins-home-pv.yaml
+
+cat <<EOF > jenkins-home-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: jenkins-home
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: jenkins-home-pv
+EOF
+
+kubectl create -f jenkins-home-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > jenkins-workspace-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: jenkins-workspace-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: jenkins-workspace
+    namespace: default
+  nfs:
+    path: /jenkins_workspace
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f jenkins-workspace-pv.yaml
+
+cat <<EOF > jenkins-workspace-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: jenkins-workspace
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: jenkins-workspace-pv
+EOF
+
+kubectl create -f jenkins-workspace-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > jenkins-jobs-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: jenkins-jobs-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: jenkins-jobs
+    namespace: default
+  nfs:
+    path: /jenkins_jobs
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f jenkins-jobs-pv.yaml
+
+cat <<EOF > jenkins-jobs-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: jenkins-jobs
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: jenkins-jobs-pv
+EOF
+
+kubectl create -f jenkins-jobs-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > jenkins-mvn-local-repo-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: jenkins-mvn-local-repo-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: jenkins-mvn-local-repo
+    namespace: default
+  nfs:
+    path: /jenkins_mvn_local_repo
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f jenkins-mvn-local-repo-pv.yaml
+
+cat <<EOF > jenkins-mvn-local-repo-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: jenkins-mvn-local-repo
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: jenkins-mvn-local-repo-pv
+EOF
+
+kubectl create -f jenkins-mvn-local-repo-pvc.yaml
+==================================================================
+
+==================================================================
+cat <<EOF > gogs-data-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: gogs-data-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: gogs-data
+    namespace: default
+  nfs:
+    path: /gogs_data
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f gogs-data-pv.yaml
+
+cat <<EOF > gogs-data-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: gogs-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: gogs-data-pv
+EOF
+
+kubectl create -f gogs-data-pvc.yaml
+==================================================================
+
+
+==================================================================
+cat <<EOF > grafana-data-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: grafana-data-pv
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 25Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: grafana-data
+    namespace: default
+  nfs:
+    path: /grafana_data
+    server: ${nfs_hostname}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+EOF
+
+kubectl create -f grafana-data-pv.yaml
+
+cat <<EOF > grafana-data-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: standard
+  name: grafana-data
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 25Gi
+  volumeName: grafana-data-pv
+EOF
+
+kubectl create -f grafana-data-pvc.yaml
+==================================================================
+

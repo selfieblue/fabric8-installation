@@ -1,0 +1,191 @@
+******************************************** Start Here ****************************************
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum install -y docker
+#sed -i "s/overlay2/devicemapper/g" /etc/sysconfig/docker-storage
+#sed -i 's/ExecStart=\/usr\/bin\/dockerd/& --insecure-registry 172.30.0.0\/16/' /usr/lib/systemd/system/docker.service
+echo "OPTIONS=\"--log-driver json-file --log-opt max-size=10m --insecure-registry 192.168.0.0/16 --insecure-registry 10.0.0.0/8\"" >> /etc/sysconfig/docker
+
+systemctl enable docker && systemctl start docker
+service docker status -l
+
+#setenforce 0
+#sed -i "s/SELINUX=permissive/SELINUX=enforcing/g" /etc/sysconfig/selinux
+#service firewalld stop
+#chkconfig firewalld off
+
+cat <<EOF >  /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sysctl --system
+yum install -y nfs-utils
+
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kube*
+EOF
+setenforce 0
+#yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+yum install -y kubelet-1.9.7 kubelet-1.9.7 kubeadm-1.9.7 --disableexcludes=kubernetes
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+cat <<EOF > /etc/kubernetes/cloud-config
+[Global]
+zone=ap-southeast-1a
+EOF
+
+# ADD could-provider configuration to /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+#sed -i '/--cgroup-driver/a Environment="KUBELET_EXTRA_ARGS=--cloud-provider=aws --cloud-config=/etc/kubernetes/cloud-config"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+echo 'KUBELET_EXTRA_ARGS="--cloud-provider=aws --cloud-config=/etc/kubernetes/cloud-config"' > /etc/sysconfig/kubelet
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+echo "1" > /proc/sys/net/ipv4/ip_forward
+
+systemctl daemon-reload
+systemctl enable docker && systemctl start docker
+systemctl enable kubelet && systemctl start kubelet
+
+
+----------MASTER----------
+kubeadm init --pod-network-cidr=192.168.0.0/16
+
+==========================================================================================
+Your Kubernetes master has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join --token 3dd10f.af5f206449152fba 10.99.103.11:6443 --discovery-token-ca-cert-hash sha256:e9fa7b7f02e63c46f19d97d5807cab11511a0dab14533f472fe08cb365724bc1
+==========================================================================================
+
+
+kubectl apply -f https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/1.7/calico.yaml
+
+kubectl get pod --all-namespaces --watch
+
+---------------
+
+kubectl label node ip-10-99-103-43.ap-southeast-1.compute.internal node-role.kubernetes.io/node=node
+kubectl label node ip-10-99-103-44.ap-southeast-1.compute.internal node-role.kubernetes.io/node=node
+kubectl get nodes
+
+---------------
+
+# Create Token =======================================================
+# https://github.com/kubernetes/dashboard/wiki/Creating-sample-user
+# ====================================================================
+
+echo -e "apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard
+  labels:
+    k8s-app: kubernetes-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kubernetes-dashboard
+  namespace: kube-system" > /tmp/dashboard-admin.yaml
+
+kubectl create -f /tmp/dashboard-admin.yaml 
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.0/src/deploy/recommended/kubernetes-dashboard.yaml
+
+kubectl get pod -n kube-system
+
+kubectl proxy  --address='0.0.0.0' --port=8001 --accept-hosts='^*$'
+Run proxy first : http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/.
+
+
+
+echo -e "apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: default-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default" > /tmp/default-admin.yaml
+
+kubectl create -f /tmp/default-admin.yaml 
+
+echo -e "apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: fabric8-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: fabric8
+  namespace: default" > /tmp/fabric8-admin.yaml
+
+kubectl create -f /tmp/fabric8-admin.yaml 
+
+
+echo -e "apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: configmapcontroller-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: configmapcontroller
+  namespace: default" > /tmp/configmapcontroller-admin.yaml
+
+kubectl create -f /tmp/configmapcontroller-admin.yaml
+
+echo -e "apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: gogs-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: gogs
+  namespace: default" > /tmp/gogs-admin.yaml
+
+kubectl create -f /tmp/gogs-admin.yaml
+
+http://localhost:8001/api/v1/namespaces/default/services/fabric8:/proxy/.
+
+http://localhost:8001/api/v1/namespaces/default/services/gogs:/proxy/.
+
+kubectl config set-context kubernetes --user=kubernetes-admin --namespace=default --cluster=kubernetes
+kubectl config use-context kubernetes
+
